@@ -24,7 +24,7 @@ This project is licensed under the MIT License.
 
 <sup>
 
-1. Keep in mind that the colors of the customizable prompt depend on C#'s `System.ConsoleColor` enum. The values are not case-sensitive.
-2. By functional, I mean "working".
+1. Keep in mind that the colors of the customizable prompt depend on C#'s `System.ConsoleColor` enum. The values are not case-sensitive.  
+2. By functional, I mean "working".  
 
 </sup>

@@ -8,6 +8,8 @@ internal static class CliParser
     internal static volatile int LastExitCode;
     internal static volatile string ExitErrorMessage = string.Empty;
 
+    private static readonly Stack<string> LastArguments = new();
+
     /// <summary>
     /// Executes the command specified.
     /// </summary>
@@ -70,35 +72,21 @@ internal static class CliParser
                 continue; // no more commands (since this is an assignment), proceed to next command
             }
 
-            List<string> args = new();
-
-            for (int i = 0, j = 0; i < newStr.Length; /* intentionally empty */)
-            {
-                args.Add(string.Empty); // add empty
-
-                if (i < newStr.Length && newStr[i] == '"')
-                {
-                    args[j] += newStr[i++]; // if newStr starts with quote, append to args[j]
-
-                    while (i < newStr.Length && newStr[i] != '"') // until newStr is not a closing quote, do the same
-                        args[j] += newStr[i++];
-
-                    args[j] += newStr[i++]; // append closing quote
-                }
-                else
-                {
-                    while (i < newStr.Length && newStr[i] is not (' ' or '\r' or '\n' or '\t' or '\f' or '\v'))
-                        args[j] += newStr[i++]; // while not at end or not whitespace, append each char of newStr to args[j]
-                }
-
-                ++j;
-
-                while (i < newStr.Length && newStr[i] is ' ' or '\r' or '\n' or '\t' or '\f' or '\v')
-                    ++i; // skip whitespace
-            }
+            var args = SliceArguments(newStr);
 
             if (args[0].StartsWith('"') && args[0].EndsWith('"'))
                 args[0] = args[0][1..^1]; // extract text between quotes
+
+            var lastArg = string.Empty;
+
+            if (LastArguments.Count > 0)
+                lastArg = LastArguments.Pop();
+
+            for (var j = 1; j < args.Length; j++)
+                args[j] = Regex.Replace(args[j], @"\$\<", lastArg);
+
+            if (args.Length > 1)
+                LastArguments.Push(args.Last());
 
             switch (args[0])
             {
@@ -111,15 +99,15 @@ internal static class CliParser
                     break;
 
                 case "print":
-                    if (args.Count < 2)
+                    if (args.Length < 2)
                     {
                         LastExitCode = 1;
                         ExitErrorMessage = "Too few arguments for print.";
                         
-                        return success; // return if any command fails (&&)
+                        return false; // return if any command fails (&&)
                     }
 
-                    for (var i = 1; i < args.Count; i++)
+                    for (var i = 1; i < args.Length; i++)
                         if (args[i].StartsWith('"') && args[i].EndsWith('"'))
                             args[i] = args[i][1..^1];
 
@@ -141,10 +129,60 @@ internal static class CliParser
                     break;
 
                 case "help":
-                    BuiltInCommands.Help();
+                    switch (args.Length)
+                    {
+                        case > 2:
+                            LastExitCode = 1;
+                            ExitErrorMessage = "Too many arguments for help.";
 
-                    LastExitCode = 0;
-                    success = true;
+                            return false; // return if any command fails (&&)
+                        case 2:
+                            try
+                            {
+                                BuiltInCommands.Help(args[1]);
+                            }
+                            catch (Exception e)
+                            {
+                                LastExitCode = 2;
+                                ExitErrorMessage = e.Message;
+
+                                return false;
+                            }
+
+                            break;
+                        default:
+                            BuiltInCommands.Help();
+
+                            LastExitCode = 0;
+                            success = true;
+                            break;
+                    }
+
+                    break;
+
+                case "cd":
+                    if (args.Length < 2)
+                    {
+                        LastExitCode = 1;
+                        ExitErrorMessage = "Too few arguments for cd.";
+
+                        return false; // return if any command fails (&&)
+                    }
+
+                    if (args[1].StartsWith('"') && args[1].EndsWith('"'))
+                        args[1] = args[1][1..^1];
+
+                    try
+                    {
+                        BuiltInCommands.Cd(args[1]);
+                    }
+                    catch (Exception e)
+                    {
+                        LastExitCode = 2;
+                        ExitErrorMessage = e.Message;
+
+                        return false;
+                    }
 
                     break;
 
@@ -177,5 +215,50 @@ internal static class CliParser
         }
 
         return success;
+    }
+
+    /// <summary>
+    /// Slices arguments into an array of strings. Parses text in quotes correctly.
+    /// </summary>
+    /// <param name="arg">The string to be sliced.</param>
+    /// <param name="escape">The escape character to be used for escaping characters like quotation marks. Default is the backslash (\).</param>
+    /// <returns>The array of sliced strings.</returns>
+    // ReSharper disable once MemberCanBePrivate.Global
+    internal static string[] SliceArguments(string arg, char escape = '\\')
+    {
+        List<string> args = new();
+
+        for (int i = 0, j = 0; i < arg.Length; /* intentionally empty */)
+        {
+            args.Add(string.Empty); // add empty
+
+            if (i < arg.Length && arg[i] == '"')
+            {
+                args[j] += arg[i++]; // if arg starts with quote, append to args[j]
+
+                while (i < arg.Length && arg[i] != '"') // until arg is not a closing quote, do the same
+                {
+                    if (arg[i] == escape)
+                        i++;
+
+                    if (i < arg.Length)
+                        args[j] += arg[i++];
+                }
+
+                args[j] += arg[i++]; // append closing quote
+            }
+            else
+            {
+                while (i < arg.Length && arg[i] is not (' ' or '\r' or '\n' or '\t' or '\f' or '\v'))
+                    args[j] += arg[i++]; // while not at end or not whitespace, append each char of arg to args[j]
+            }
+
+            ++j;
+
+            while (i < arg.Length && arg[i] is ' ' or '\r' or '\n' or '\t' or '\f' or '\v')
+                ++i; // skip whitespace
+        }
+
+        return args.ToArray();
     }
 }

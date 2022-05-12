@@ -4,6 +4,7 @@ internal static class Program
 {
     private const string DefaultFormat = @"%u:%m@%c ~% ";
 
+    // List of built-in variables. The order of these won't change, ever.
     private static readonly string[] BuiltInVariables =
     {
         "prompt_fmt",
@@ -15,11 +16,11 @@ internal static class Program
         "quiet_startup"
     };
 
-    private static readonly Version ProgramVersion = new(1, 0, 0);
+    private static readonly Version ProgramVersion = new(1, 0, 1);
 
     private static readonly HelpContext[] HelpContexts =
     {
-        new() { Command = "-q", Description = "Runs the program quietly (doesn't show version and help)." },
+        new() { Command = "-q", Description = "Runs the program quietly (don't show version and help)." },
         new() { Command = "-ex", Description = "Executes a command BEFORE parsing .apcrc." },
         new() { Command = "-v", Description = "Shows the version and exits the program." },
         new() { Command = "-h", Description = "Shows this help message and exits the program." }
@@ -27,6 +28,7 @@ internal static class Program
 
     private static int Main(string[] args)
     {
+        var kvEx = new Dictionary<string, string>();
         var kv = new Dictionary<string, string>();
 
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -52,7 +54,7 @@ internal static class Program
                     return 1;
                 }
 
-                CliParser.ExecuteCommand(args[i + 1], ref kv);
+                CliParser.ExecuteCommand(args[i + 1], ref kvEx);
             }
         }
 
@@ -92,20 +94,24 @@ internal static class Program
 
         Config.ReadConfigFile(rc, ref kv);
 
+        // merge kvEx and kv, prioritizing kvEx values if there are duplicates
+        kvEx.ToList().ForEach(x => kv[x.Key] = x.Value);
+
         if (!kv.ContainsKey(BuiltInVariables[0]))
             kv.Add(BuiltInVariables[0], DefaultFormat);
 
+        // second check
         if (kv.ContainsKey(BuiltInVariables[6]))
-            if (!quietStartup)
-                _ = bool.TryParse(kv[BuiltInVariables[6]], out quietStartup);
+            _ = bool.TryParse(kv[BuiltInVariables[6]], out quietStartup);
 
         ConsoleColor userColor = ConsoleColor.Blue, machineColor = ConsoleColor.Cyan, cwdColor = ConsoleColor.Magenta,
             exitColorSuccess = ConsoleColor.Green, exitColorFail = ConsoleColor.Red;
 
-        if (!quietStartup)
+        if (quietStartup == false /* WHY?? nullable bool */)
         {
             Console.WriteLine($"ASH (Application shell) version {ProgramVersion}");
-            Console.WriteLine("To hide this message, run ASH with the -q flag (overrides .apcrc).");
+            Console.WriteLine("To hide this message, run ASH with the -q flag (overrides .apcrc) " +
+                              $"or -ex \"{BuiltInVariables[6]} = true\" (overrides both -q and .apcrc.)");
             Console.WriteLine();
 
             Console.WriteLine("To see the names and descriptions of every built-in command, type \"help\" then press ENTER.");

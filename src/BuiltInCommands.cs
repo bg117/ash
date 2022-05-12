@@ -2,13 +2,17 @@
 
 namespace OpenProject.ASH;
 
+/// <summary>
+/// Built-in commands helper class. Exceptions are to be handled by the calling code.
+/// </summary>
 internal static class BuiltInCommands
 {
     private static readonly HelpContext[] HelpContexts =
     {
-        new() { Command = "help", Description = "Shows the name and description of every command." },
-        new() { Command = "echo", Description = "Prints the succeeding arguments to the console and a new line. Quotes won't be removed. They will be printed as-is." },
-        new() { Command = "print", Description = "Formats and prints the text according to the format string. Quotes will be removed. Also un-escapes escape sequences (like \\n, \\r, etc.)." }
+        new() { Command = "help", Description = "Shows the name and description of every command.", Usage = "help [command]" },
+        new() { Command = "echo", Description = "Prints the succeeding arguments to the console and a new line. Quotes won't be removed. They will be printed as-is.", Usage = "echo [text]" },
+        new() { Command = "print", Description = "Formats and prints the text according to the format string. Quotes will be removed. Also un-escapes escape sequences (like \\n, \\r, etc.).", Usage = "print <format> [arg1, [arg2, [...]]" },
+        new() { Command = "cd", Description = "Changes the current directory.", Usage = "cd <directory>" }
     };
 
     private enum PrintState
@@ -26,15 +30,31 @@ internal static class BuiltInCommands
         VeryLong
     }
 
-    internal static void Help()
+    internal static void Help(string? command = null)
     {
-        foreach (var ctx in HelpContexts)
-            Console.WriteLine($"{ctx.Command}: {ctx.Description}");
+        if (command == null)
+        {
+            foreach (var ctx in HelpContexts)
+                Console.WriteLine($"{ctx.Command}: {ctx.Description}{Environment.NewLine}    Usage: {ctx.Usage}");
+        }
+        else
+        {
+            if (HelpContexts.All(c => c.Command != command))
+                throw new ArgumentException($"Command \"{command}\" not found in database.");
+
+            var ctx = HelpContexts.First(c => c.Command == command);
+            Console.WriteLine($"{ctx.Command}: {ctx.Description}{Environment.NewLine}    Usage: {ctx.Usage}");
+        }
     }
 
     internal static void Echo(string msg)
     {
         Console.WriteLine(msg); // it's as simple as that :)
+    }
+
+    internal static void Cd(string newDir)
+    {
+        Directory.SetCurrentDirectory(newDir);
     }
 
     internal static void Print(string fmt, string[] args)

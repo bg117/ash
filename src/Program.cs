@@ -16,7 +16,7 @@ internal static class Program
         "quiet_startup"
     };
 
-    private static readonly Version ProgramVersion = new(1, 0, 1);
+    private static readonly Version ProgramVersion = new(1, 1, 0);
 
     private static readonly HelpContext[] HelpContexts =
     {

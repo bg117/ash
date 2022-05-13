@@ -10,9 +10,10 @@ internal static class BuiltInCommands
     private static readonly HelpContext[] HelpContexts =
     {
         new() { Command = "help", Description = "Shows the name and description of every command.", Usage = "help [command]" },
-        new() { Command = "echo", Description = "Prints the succeeding arguments to the console and a new line. Quotes won't be removed. They will be printed as-is.", Usage = "echo [text]" },
+        new() { Command = "echo", Description = "Prints the succeeding arguments to the console and a new line. Quotes won't be removed. They will be printed as-is.", Usage = "echo [text...]" },
         new() { Command = "print", Description = "Formats and prints the text according to the format string. Quotes will be removed. Also un-escapes escape sequences (like \\n, \\r, etc.).", Usage = "print <format> [arg1, [arg2, [...]]" },
-        new() { Command = "cd", Description = "Changes the current directory.", Usage = "cd <directory>" }
+        new() { Command = "cd", Description = "Changes the current directory.", Usage = "cd <directory>" },
+        new() { Command = "ls", Description = "Lists the files in the current directory, or optionally, in the directory specified.", Usage = "ls [-a] [-l] [-h] [directory]" }
     };
 
     private enum PrintState
@@ -35,7 +36,10 @@ internal static class BuiltInCommands
         if (command == null)
         {
             foreach (var ctx in HelpContexts)
+            {
                 Console.WriteLine($"{ctx.Command}: {ctx.Description}{Environment.NewLine}    Usage: {ctx.Usage}");
+                Console.WriteLine();
+            }
         }
         else
         {
@@ -55,6 +59,89 @@ internal static class BuiltInCommands
     internal static void Cd(string newDir)
     {
         Directory.SetCurrentDirectory(newDir);
+    }
+
+    internal static void Ls(string directory, bool listFormat, bool all, bool humanReadable)
+    {
+        var dir = new DirectoryInfo(directory);
+        var list = dir.GetFileSystemInfos();
+        var files = dir.GetFiles();
+
+        var nameLen = list.Max(x => x.Name.Length) + 2;
+        var sizeLen = files.Max(x => x.Length.ToString().Length) + 2;
+
+        if (listFormat)
+        {
+            var header = 
+                $"{"Mode",-7} | {"Name".PadRight(nameLen)} | {"Date Modified",-20 /* 1970/01/01 00:00:00 */} | {"Date Created",-20} | {"Size".PadRight(sizeLen)}";
+
+            Console.WriteLine(header);
+            Console.WriteLine(new string('-', header.Length));
+
+            var printFileInfo = new Action<FileSystemInfo>(info =>
+            {
+                var attribute = string.Empty;
+
+                // darhsl attributes
+                attribute += info.Attributes.HasFlag(FileAttributes.Directory) ? "d" : "-";
+                attribute += info.Attributes.HasFlag(FileAttributes.Archive) ? "a" : "-";
+                attribute += info.Attributes.HasFlag(FileAttributes.ReadOnly) ? "r" : "-";
+                attribute += info.Attributes.HasFlag(FileAttributes.Hidden) ? "h" : "-";
+                attribute += info.Attributes.HasFlag(FileAttributes.System) ? "s" : "-";
+                attribute += info.Attributes.HasFlag(FileAttributes.ReparsePoint) ? "l" : "-";
+
+                // attributes | name | last write time | creation time | file size (if -h, sort by B/KB/MB/GB/TB/PB/EB)
+                Console.WriteLine(
+                    $"{attribute}  | " +
+                    $"{info.Name.PadRight(nameLen)} | " + 
+                    $"{info.LastWriteTime:yyyy/MM/dd HH:mm:ss}  | " +
+                    $"{info.CreationTime:yyyy/MM/dd HH:mm:ss}  | " +
+                    $"{(info is FileInfo file
+                        ? humanReadable
+                            ? StringHelpers.BytesToString(file.Length)
+                            : file.Length
+                        : "")}"
+                );
+            });
+
+            foreach (var info in list)
+            {
+                if (info.Attributes.HasFlag(FileAttributes.Hidden))
+                {
+                    if (all)
+                        printFileInfo(info);
+                    else
+                        continue;
+                }
+
+                printFileInfo(info);
+            }
+        }
+        else // ignore human-readable flag
+        {
+            // determine the maximum number of text with length nameLen can fit inside the console
+            var newlineEveryX = Console.BufferWidth / nameLen;
+            var i = 0;
+
+            foreach (var info in list)
+            {
+                if (i++ >= newlineEveryX)
+                {
+                    Console.WriteLine();
+                    i = 0;
+                }
+
+                if (info.Attributes.HasFlag(FileAttributes.Hidden))
+                {
+                    if (all)
+                        Console.Write($"{info.Name.PadRight(nameLen)}");
+                    else
+                        continue;
+                }
+                
+                Console.Write(info.Name.PadRight(nameLen));
+            }
+        }
     }
 
     internal static void Print(string fmt, string[] args)

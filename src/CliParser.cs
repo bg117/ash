@@ -186,6 +186,48 @@ internal static class CliParser
 
                     break;
 
+                case "ls":
+                    {
+                        bool humanReadable = false, all = false, list = false;
+                        var predicate = new Func<string, bool>(each => each is not ("-l" or "-a" or "-h"));
+                        var directory = Directory.GetCurrentDirectory();
+
+                        if (args.Contains("-l"))
+                            list = true;
+
+                        if (args.Contains("-a"))
+                            all = true;
+
+                        if (args.Contains("-h"))
+                            humanReadable = true;
+
+                        if (args.Skip(1).Any(predicate))
+                        {
+                            if (args.Skip(1).Where(predicate).Take(2).Count() > 1)
+                            {
+                                LastExitCode = 1;
+                                ExitErrorMessage = "Too many arguments for ls.";
+
+                                return false;
+                            }
+                            directory = args.Skip(1).First(predicate);
+                        }
+
+                        try
+                        {
+                            BuiltInCommands.Ls(directory, list, all, humanReadable);
+                        }
+                        catch (Exception e)
+                        {
+                            LastExitCode = 2;
+                            ExitErrorMessage = e.Message;
+
+                            return false;
+                        }
+                    }
+
+                    break;
+
                 default:
                     {
                         Process process = new();

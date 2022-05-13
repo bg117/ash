@@ -60,7 +60,26 @@ Alternatively, you can set `quiet_startup` to `true` in `.apcrc`.
 
 ## Built-in Commands
 
-<!-- TODO: Describe built-in commands. -->
+There are 5 built-in commands.
+
+- `help [command]`: Displays the help page. If `[command]` is specified, it displays its description and usage.
+- `echo [text...]`: Prints `[text]` and succeeding arguments to the console and a new line. Quotes won't be removed. They will be printed as-is.
+- `print <format> [arg1, [arg2, [...]]`: Formats and prints the text according to the format string `<format>`. Quotes will be removed. Also un-escapes escape sequences (like \\n, \\r, etc.).
+- `cd <directory>`: Changes the current directory to `<directory>`.
+- `ls [-a] [-l] [-h] [directory]`: Lists the files in the current directory, or optionally, in `[directory]`. Use `-a` to list all files in the directory, including hidden files; `-l` to list the contents in list format; `-h` to print the sizes in human-readable format (with units like B, K, M, G, T, P, E.)
+
+### `ls` list Format
+
+`ls -l` will print something like this:
+
+```txt
+Mode    | Name   | Date Modified        | Date Created         | Size
+-----------------------------------------------------------------------
+darhsl  | a.txt  | 1980/01/02 10:37:00  | 1980/01/01 10:29:00  | 7522
+darhsl  | b.a    | 1980/01/03 09:34:00  | 1980/01/03 11:22:00  | 10
+```
+
+With `-h` flag, the `Size` header may become `7.5K` and `10B`, respectively.
 
 ## Changelog
 

@@ -6,6 +6,9 @@
 ##################
 .vscode/
 
+publish.cmd
+publish.sh
+
 ###################
 # compiled source #
 ###################

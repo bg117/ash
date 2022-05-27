@@ -5,9 +5,12 @@
 # VS Code folder #
 ##################
 .vscode/
+.idea/
 
 publish.cmd
 publish.sh
+
+*.docxml
 
 ###################
 # compiled source #

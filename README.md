@@ -14,14 +14,30 @@ And more!
 
 ## Usage
 
+### Flags
+
 These flags modify how ASH starts up.
 
-- `-q`: quiet startup (discussed below in `## Quiet Startup`)
-- `-ex <commands>`: runs `<commands>` before startup, and before parsing `.apcrc`
+- `-q`: quiet startup (discussed below in `## Quiet Startup`.)
+- `-ex <commands>`: runs `<commands>` before startup, and before parsing `.apcrc`.
+  - `-c`: exits immediately after commands finish executing.
 - `-v`: prints the version of ASH and exits.
 - `-h`: prints the description of every flag, and exits.
+- `-run <script>`: runs `<scripts>` then exits.
+  - `-e`: exits immediately when an error gets encountered.
 
-## Customizable Prompt Format
+### Variables
+
+In ASH, all variables are strings. You needn't enclose them with quotes, unless there is trailing whitespace (in which case, you do.)
+
+To refer to a variable: `$variable`  
+To assign to/create a variable: `variable = new value`
+
+If the variable doesn't already exist in the first place, referring to it will just print the text `$variable` literally. For example, `echo`ing a non-existent `$hello` will just print `$hello` to the console.
+
+It doesn't matter if the variable is inside quotes or not, it will get expanded.
+
+### Customizable Prompt Format
 
 To modify the prompt, you may change the value of the `prompt_fmt` variable, either in the `.apcrc` file in your home directory or assigning it directly in the shell (will get reset the next time you open the shell.)
 
@@ -34,13 +50,13 @@ Currently, there are 4 format specifiers to be used in customizing the prompt.
 
 There is another miscellaneous specifier: `%nl`. It is used to represent a new line in the prompt format. It is subject to change in a future version of the shell.
 
-The default is `prompt_fmt = "%u:%m@%c ~% "`
+The default is `prompt_fmt = "%u@%m:%c$ "`
 
 It may display the following:
 
-`user:machine@/some/directory ~%`
+`user@machine:/some/directory$`
 
-### Colors
+#### Colors
 
 You can customize the colors of the prompt elements.
 
@@ -52,13 +68,7 @@ You can customize the colors of the prompt elements.
 
 All of them can have the values `Black`, `DarkBlue`, `DarkGreen`, `DarkCyan`, `DarkRed`, `DarkMagenta`, `DarkYellow`, `Gray`, `DarkGray`, `Blue`, `Green`, `Cyan`, `Red`, `Magenta`, `Yellow`, `White`. The values are case-**in**sensitive.
 
-## Quiet Startup
-
-To run ASH without the header, run it with the `-q` flag OR with `-ex "quiet_startup = true"`. Both of these override the value in `.apcrc`.
-
-Alternatively, you can set `quiet_startup` to `true` in `.apcrc`.
-
-## Built-in Commands
+### Built-in Commands
 
 There are 5 built-in commands.
 
@@ -68,7 +78,7 @@ There are 5 built-in commands.
 - `cd <directory>`: Changes the current directory to `<directory>`.
 - `ls [-a] [-l] [-h] [directory]`: Lists the files in the current directory, or optionally, in `[directory]`. Use `-a` to list all files in the directory, including hidden files; `-l` to list the contents in list format; `-h` to print the sizes in human-readable format (with units like B, K, M, G, T, P, E.)
 
-### `ls` list Format
+#### `ls` list Format
 
 `ls -l` will print something like this:
 
@@ -81,6 +91,12 @@ darhsl  | b.a    | 1980/01/03 09:34:00  | 1980/01/03 11:22:00  | 10
 
 With `-h` flag, the `Size` header may become `7.5K` and `10B`, respectively.
 
+## Quiet Startup
+
+To run ASH without the header, run it with the `-q` flag OR with `-ex "quiet_startup = true"`. Both of these override the value in `.apcrc`.
+
+Alternatively, you can set `quiet_startup` to `true` in `.apcrc`.
+
 ## Changelog
 
 The changelog can be found [here](CHANGELOG.md).
@@ -92,8 +108,6 @@ This project is licensed under the MIT License.
 ## Notes
 
 <sup>
-
-1. Keep in mind that the colors of the customizable prompt depend on C#'s `System.ConsoleColor` enum. The values are not case-sensitive.  
+1. Keep in mind that the colors of the customizable prompt depend on C#'s `System.ConsoleColor` enum. The values are not case-sensitive.
 2. By functional, I mean "working".  
-
 </sup>

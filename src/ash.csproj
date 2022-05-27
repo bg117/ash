@@ -1,15 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-	  <LangVersion>preview</LangVersion>
-	  <RootNamespace>OpenProject.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
-	  <AssemblyVersion>1.1.0</AssemblyVersion>
-	  <SignAssembly>False</SignAssembly>
-	  <StartupObject>OpenProject.ASH.Program</StartupObject>
-  </PropertyGroup>
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>preview</LangVersion>
+        <RootNamespace>OpenProject.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+        <AssemblyVersion>1.2.0</AssemblyVersion>
+        <SignAssembly>False</SignAssembly>
+        <StartupObject>OpenProject.ASH.Program</StartupObject>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+      <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+      <DocumentationFile>debug.documentation.docxml</DocumentationFile>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+      <DocumentationFile>release.documentation.docxml</DocumentationFile>
+    </PropertyGroup>
 
 </Project>

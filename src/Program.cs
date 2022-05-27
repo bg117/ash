@@ -1,29 +1,37 @@
-﻿namespace OpenProject.ASH;
+﻿using System.Reflection;
+
+namespace OpenProject.ASH;
 
 internal static class Program
 {
-    private const string DefaultFormat = @"%u:%m@%c ~% ";
+    private const string DefaultFormat = @"%u@%m:%c$ ";
 
-    // List of built-in variables. The order of these won't change, ever.
-    private static readonly string[] BuiltInVariables =
-    {
-        "prompt_fmt",
-        "prompt_fmt_u_color",
-        "prompt_fmt_m_color",
-        "prompt_fmt_c_color",
-        "prompt_fmt_e_success_color",
-        "prompt_fmt_e_fail_color",
-        "quiet_startup"
-    };
-
-    private static readonly Version ProgramVersion = new(1, 1, 0);
+    private static readonly Version ProgramVersion =
+        Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0);
 
     private static readonly HelpContext[] HelpContexts =
     {
-        new() { Command = "-q", Description = "Runs the program quietly (don't show version and help)." },
-        new() { Command = "-ex", Description = "Executes a command BEFORE parsing .apcrc." },
-        new() { Command = "-v", Description = "Shows the version and exits the program." },
-        new() { Command = "-h", Description = "Shows this help message and exits the program." }
+        new()
+        {
+            Command = "-q",
+            Description =
+                "Runs the program quietly (don't show version and help)."
+        },
+        new()
+        {
+            Command     = "-ex",
+            Description = "Executes a command BEFORE parsing .apcrc."
+        },
+        new()
+        {
+            Command     = "-v",
+            Description = "Shows the version and exits the program."
+        },
+        new()
+        {
+            Command     = "-h",
+            Description = "Shows this help message and exits the program."
+        }
     };
 
     private static int Main(string[] args)
@@ -31,35 +39,39 @@ internal static class Program
         var kvEx = new Dictionary<string, string>();
         var kv = new Dictionary<string, string>();
 
-        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        var home =
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var rc = Path.Combine(home, ".apcrc");
 
-        var quietStartup = false;
+        var quietStartup = args.Contains("-q");
 
         // if there are -ex arguments, execute them first
         if (args.Contains("-ex"))
         {
+            var exitImmediately = args.Contains("-c");
             var execute =
                 args
-                    .Select((a, ind) => a == "-ex" ? ind : -1)
-                    .Where(ind => ind != -1); // gets the indices of all -ex arguments
+                   .Select((a, ind) => a == "-ex" ? ind : -1)
+                   .Where(ind => ind !=
+                                 -1); // gets the indices of all -ex arguments
 
             foreach (var i in execute)
             {
-                if (i + 1 >= args.Length)
+                if ((i + 1) >= args.Length)
                 {
-                    ConsoleExtensions.ColoredWriteLine(Console.Error, "[Error]: -ex requires an argument.",
-                        ConsoleColor.Red);
+                    ConsoleExtensions.ColoredWriteLine(Console.Error,
+                                                       "[Error]: -ex requires an argument.",
+                                                       ConsoleColor.Red);
 
                     return 1;
                 }
 
-                CliParser.ExecuteCommand(args[i + 1], ref kvEx);
+                Shell.ExecuteCommand(args[i + 1], ref kvEx);
             }
-        }
 
-        if (args.Contains("-q"))
-            quietStartup = true;
+            if (exitImmediately)
+                return 0;
+        }
 
         if (args.Contains("-h"))
         {
@@ -78,40 +90,108 @@ internal static class Program
         if (!File.Exists(rc))
         {
             File.AppendAllLines(
-                rc,
-                new []
-                {
-                    "#RC VERSION 001",
-                    $"{BuiltInVariables[0]} = \"{DefaultFormat}\"",
-                    $"{BuiltInVariables[1]} = blue",
-                    $"{BuiltInVariables[2]} = cyan",
-                    $"{BuiltInVariables[3]} = magenta",
-                    $"{BuiltInVariables[4]} = green",
-                    $"{BuiltInVariables[5]} = red",
-                    $"{BuiltInVariables[6]} = false"
-                });
+                                rc,
+                                new[]
+                                {
+                                    "#RC VERSION 001",
+                                    $"{ShellProperties.BuiltInVariables[0]} = \"{DefaultFormat}\"",
+                                    $"{ShellProperties.BuiltInVariables[1]} = white",
+                                    $"{ShellProperties.BuiltInVariables[2]} = white",
+                                    $"{ShellProperties.BuiltInVariables[3]} = white",
+                                    $"{ShellProperties.BuiltInVariables[4]} = white",
+                                    $"{ShellProperties.BuiltInVariables[5]} = white",
+                                    $"{ShellProperties.BuiltInVariables[6]} = false",
+                                    $"{ShellProperties.BuiltInVariables[7]} = {Environment.GetEnvironmentVariable("path")
+                                                                          ?.Replace(Path.PathSeparator, '|')}",
+                                    $"{ShellProperties.BuiltInVariables[8]} = {Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}"
+                                });
         }
 
-        Config.ReadConfigFile(rc, ref kv);
+        Shell.RunShellFile(rc, ref kv);
 
         // merge kvEx and kv, prioritizing kvEx values if there are duplicates
-        kvEx.ToList().ForEach(x => kv[x.Key] = x.Value);
+        kv = kvEx.Merge(kv);
 
-        if (!kv.ContainsKey(BuiltInVariables[0]))
-            kv.Add(BuiltInVariables[0], DefaultFormat);
+        if (args.Contains("-run"))
+        {
+            var exitWhenError = args.Contains("-e");
 
-        // second check
-        if (kv.ContainsKey(BuiltInVariables[6]))
-            _ = bool.TryParse(kv[BuiltInVariables[6]], out quietStartup);
+            var execute =
+                args
+                   .Select((a, ind) => a == "-run" ? ind : -1)
+                   .Where(ind => ind !=
+                                 -1).ToList(); // gets the indices of all -run arguments
+            // (but we'll get the first only)
+            var index = execute[0] + 1;
 
-        ConsoleColor userColor = ConsoleColor.Blue, machineColor = ConsoleColor.Cyan, cwdColor = ConsoleColor.Magenta,
-            exitColorSuccess = ConsoleColor.Green, exitColorFail = ConsoleColor.Red;
+            if (index >= args.Length)
+            {
+                ConsoleExtensions.ColoredWriteLine(Console.Error,
+                                                   "[Error]: -run requires a shell script to run.",
+                                                   ConsoleColor.Red);
+                return 2;
+            }
 
-        if (quietStartup == false /* WHY?? nullable bool */)
+            var script = args[index];
+            if (!File.Exists(script))
+            {
+                ConsoleExtensions.ColoredWriteLine(Console.Error,
+                                                   $"[Error]: script \"{script}\"" +
+                                                   "does not exist in the current directory",
+                                                   ConsoleColor.Red);
+                return 3;
+            }
+
+            var lines = File.ReadAllLines(script);
+
+            foreach (var line in lines.Where(line => !Shell.ExecuteCommand(line, ref kv)))
+            {
+                ConsoleExtensions.ColoredWriteLine(Console.Error,
+                                                   $"[Error]: {ShellProperties.ExitErrorMessage}",
+                                                   ConsoleColor.Red);
+
+                if (exitWhenError)
+                    return ShellProperties.LastExitCode;
+            }
+
+            return 0;
+        }
+
+        if (!kv.ContainsKey(ShellProperties.BuiltInVariables[0]))
+            kv.Add(ShellProperties.BuiltInVariables[0], DefaultFormat);
+
+        if (!quietStartup)
+        {
+            if (kv.ContainsKey(ShellProperties.BuiltInVariables[6]))
+                _ = bool.TryParse(kv[ShellProperties.BuiltInVariables[6]], out quietStartup);
+        }
+
+        var userColor = ConsoleColor.White;
+        var machineColor = ConsoleColor.White;
+        var cwdColor = ConsoleColor.White;
+        var exitColorSuccess = ConsoleColor.White;
+        var exitColorFail = ConsoleColor.White;
+
+        if (!kv.ContainsKey(ShellProperties.BuiltInVariables[1]))
+            kv.Add(ShellProperties.BuiltInVariables[1], userColor.ToString());
+
+        if (!kv.ContainsKey(ShellProperties.BuiltInVariables[2]))
+            kv.Add(ShellProperties.BuiltInVariables[2], machineColor.ToString());
+
+        if (!kv.ContainsKey(ShellProperties.BuiltInVariables[3]))
+            kv.Add(ShellProperties.BuiltInVariables[3], cwdColor.ToString());
+
+        if (!kv.ContainsKey(ShellProperties.BuiltInVariables[4]))
+            kv.Add(ShellProperties.BuiltInVariables[4], exitColorSuccess.ToString());
+
+        if (!kv.ContainsKey(ShellProperties.BuiltInVariables[5]))
+            kv.Add(ShellProperties.BuiltInVariables[5], exitColorFail.ToString());
+
+        if (!quietStartup)
         {
             Console.WriteLine($"ASH (Application shell) version {ProgramVersion}");
-            Console.WriteLine("To hide this message, run ASH with the -q flag (overrides .apcrc) " +
-                              $"or -ex \"{BuiltInVariables[6]} = true\" (overrides both -q and .apcrc.)");
+            Console.WriteLine($"To hide this message, run ASH with -ex \"{ShellProperties.BuiltInVariables[6]} = true\" (overrides .apcrc) " +
+                              "or the -q flag (overrides both -ex and .apcrc.)");
             Console.WriteLine();
 
             Console.WriteLine("To see the names and descriptions of every built-in command, type \"help\" then press ENTER.");
@@ -120,40 +200,37 @@ internal static class Program
 
         while (true)
         {
-            if (kv.ContainsKey(BuiltInVariables[1]))
-                _ = Enum.TryParse(kv[BuiltInVariables[1]], true, out userColor);
-
-            if (kv.ContainsKey(BuiltInVariables[2]))
-                _ = Enum.TryParse(kv[BuiltInVariables[2]], true, out machineColor);
-
-            if (kv.ContainsKey(BuiltInVariables[3]))
-                _ = Enum.TryParse(kv[BuiltInVariables[3]], true, out cwdColor);
-
-            if (kv.ContainsKey(BuiltInVariables[4]))
-                _ = Enum.TryParse(kv[BuiltInVariables[4]], true, out exitColorSuccess);
-
-            if (kv.ContainsKey(BuiltInVariables[5]))
-                _ = Enum.TryParse(kv[BuiltInVariables[5]], true, out exitColorFail);
-
             var user = Environment.UserName;
             var host = Environment.MachineName;
 
             var cwd = Environment.CurrentDirectory;
 
-            ConsoleExtensions.ColoredWrite(Console.Out, kv[BuiltInVariables[0]]
-                                                    .Replace("%u", $"[{user}]")
-                                                    .Replace("%m", $"[{host}]")
-                                                    .Replace("%c", $"[{cwd}]")
-                                                    .Replace("%nl", "\n")
-                                                    .Replace("%e", $"[{CliParser.LastExitCode}]"),
+            _ = Enum.TryParse(kv[ShellProperties.BuiltInVariables[1]], true, out userColor);
+            _ = Enum.TryParse(kv[ShellProperties.BuiltInVariables[2]], true, out machineColor);
+            _ = Enum.TryParse(kv[ShellProperties.BuiltInVariables[3]], true, out cwdColor);
+            _ = Enum.TryParse(kv[ShellProperties.BuiltInVariables[4]], true, out exitColorSuccess);
+            _ = Enum.TryParse(kv[ShellProperties.BuiltInVariables[5]], true, out exitColorFail);
+
+            ConsoleExtensions.ColoredWrite(Console.Out, kv[ShellProperties.BuiltInVariables[0]]
+                                                       .Replace("%u",
+                                                                $"[{user}]")
+                                                       .Replace("%m",
+                                                                $"[{host}]")
+                                                       .Replace("%c",
+                                                                $"[{cwd}]")
+                                                       .Replace("%nl", "\n")
+                                                       .Replace("%e",
+                                                                $"[{ShellProperties.LastExitCode}]"),
                                            userColor,
-                                               machineColor,
-                                               cwdColor,
-                                               CliParser.LastExitCode == 0 ? exitColorSuccess : exitColorFail);
+                                           machineColor,
+                                           cwdColor,
+                                           ShellProperties.LastExitCode == 0
+                                               ? exitColorSuccess
+                                               : exitColorFail);
 
             var input = Console.ReadLine();
 
-            if (string.IsNullOrEmpty(input))
+            if (string.IsNullOrWhiteSpace(input))
                 continue;
 
             if (input == "exit")
@@ -163,14 +240,18 @@ internal static class Program
 
             try
             {
-                if (!CliParser.ExecuteCommand(input, ref kv))
-                    ConsoleExtensions.ColoredWriteLine(Console.Error, $"[Error]: {CliParser.ExitErrorMessage}",
-                        ConsoleColor.Red);
+                if (!Shell.ExecuteCommand(input, ref kv))
+                {
+                    ConsoleExtensions.ColoredWriteLine(Console.Error,
+                                                       $"[Error]: {ShellProperties.ExitErrorMessage}",
+                                                       ConsoleColor.Red);
+                }
             }
             catch (Exception e)
             {
-                ConsoleExtensions.ColoredWriteLine(Console.Error, $"[Error]: {e.Message}",
-                    ConsoleColor.Red);
+                ConsoleExtensions.ColoredWriteLine(Console.Error,
+                                                   $"[Error]: {e.Message}",
+                                                   ConsoleColor.Red);
             }
 
             Console.WriteLine();

@@ -101,8 +101,7 @@ internal static class Program
                                     $"{ShellProperties.BuiltInVariables[4]} = white",
                                     $"{ShellProperties.BuiltInVariables[5]} = white",
                                     $"{ShellProperties.BuiltInVariables[6]} = false",
-                                    $"{ShellProperties.BuiltInVariables[7]} = {Environment.GetEnvironmentVariable("path")
-                                                                          ?.Replace(Path.PathSeparator, '|')}",
+                                    $"{ShellProperties.BuiltInVariables[7]} = {Environment.GetEnvironmentVariable("PATH")?.Replace(Path.PathSeparator, '|')}",
                                     $"{ShellProperties.BuiltInVariables[8]} = {Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}"
                                 });
         }

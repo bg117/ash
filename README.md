@@ -8,7 +8,7 @@ ASH boasts a number of features, including:
 
 - Customizable prompt (with colors<sub>1</sub> and all)
 - A functional<sub>2</sub> scripting language
-- Some powerful built-in commands
+- Some built-in commands
 
 And more!
 
@@ -18,13 +18,11 @@ And more!
 
 These flags modify how ASH starts up.
 
-- `-q`: quiet startup (discussed below in `## Quiet Startup`.)
-- `-ex <commands>`: runs `<commands>` before startup, and before parsing `.apcrc`.
+- `--quiet|-q`: quiet startup (discussed below in `## Quiet Startup`.)
+- `--execute|-x <commands>`: runs `<commands>` before startup, and before parsing `ash.cfg`.
   - `-c`: exits immediately after commands finish executing.
-- `-v`: prints the version of ASH and exits.
-- `-h`: prints the description of every flag, and exits.
-- `-run <script>`: runs `<scripts>` then exits.
-  - `-e`: exits immediately when an error gets encountered.
+- `--version|-v`: prints the version of ASH and exits.
+- `--help|-h`: prints the description of every flag, and exits.
 
 ### Variables
 
@@ -39,7 +37,7 @@ It doesn't matter if the variable is inside quotes or not, it will get expanded.
 
 ### Customizable Prompt Format
 
-To modify the prompt, you may change the value of the `prompt_fmt` variable, either in the `.apcrc` file in your home directory or assigning it directly in the shell (will get reset the next time you open the shell.)
+To modify the prompt, you may change the value of the `prompt_fmt` variable, either in the `ash.cfg` file in your home directory or assigning it directly in the shell (will get reset the next time you open the shell.)
 
 Currently, there are 4 format specifiers to be used in customizing the prompt.
 
@@ -54,7 +52,9 @@ The default is `prompt_fmt = "%u@%m:%c$ "`
 
 It may display the following:
 
-`user@machine:/some/directory$`
+```
+user@machine:/some/directory$
+```
 
 #### Colors
 
@@ -73,8 +73,8 @@ All of them can have the values `Black`, `DarkBlue`, `DarkGreen`, `DarkCyan`, `D
 There are 5 built-in commands.
 
 - `help [command]`: Displays the help page. If `[command]` is specified, it displays its description and usage.
-- `echo [text...]`: Prints `[text]` and succeeding arguments to the console and a new line. Quotes won't be removed. They will be printed as-is.
-- `print <format> [arg1, [arg2, [...]]`: Formats and prints the text according to the format string `<format>`. Quotes will be removed. Also un-escapes escape sequences (like \\n, \\r, etc.).
+- `echo [text]`: Prints `[text]` and succeeding arguments to the console and a new line. Quotes won't be removed. They will be printed as-is.
+- `print <format> [arg1, [arg2, [...]]]`: Formats and prints the text according to the format string `<format>`. Quotes will be removed. Also un-escapes escape sequences (like \\n, \\r, etc.).
 - `cd <directory>`: Changes the current directory to `<directory>`.
 - `ls [-a] [-l] [-h] [directory]`: Lists the files in the current directory, or optionally, in `[directory]`. Use `-a` to list all files in the directory, including hidden files; `-l` to list the contents in list format; `-h` to print the sizes in human-readable format (with units like B, K, M, G, T, P, E.)
 
@@ -89,13 +89,13 @@ darhsl  | a.txt  | 1980/01/02 10:37:00  | 1980/01/01 10:29:00  | 7522
 darhsl  | b.a    | 1980/01/03 09:34:00  | 1980/01/03 11:22:00  | 10
 ```
 
-With `-h` flag, the `Size` header may become `7.5K` and `10B`, respectively.
+With the `-h` flag, the `Size` header may become `7.5K` and `10B`, respectively.
 
 ## Quiet Startup
 
-To run ASH without the header, run it with the `-q` flag OR with `-ex "quiet_startup = true"`. Both of these override the value in `.apcrc`.
+To run ASH without the header, run it with the `--quiet`/`-q` flag or with `--execute`/`-x "quiet_startup = true"`. Both of these override the value in `ash.cfg`.
 
-Alternatively, you can set `quiet_startup` to `true` in `.apcrc`.
+Alternatively, you can set `quiet_startup` to `true` in `ash.cfg`.
 
 ## Changelog
 

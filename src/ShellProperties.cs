@@ -5,16 +5,6 @@
 /// </summary>
 public static class ShellProperties {
     /// <summary>
-    ///     Exit code of the last command executed.
-    /// </summary>
-    public static int LastExitCode { get; set; }
-
-    /// <summary>
-    ///     Error message of the last failed command.
-    /// </summary>
-    public static string ExitErrorMessage { get; set; } = string.Empty;
-
-    /// <summary>
     ///     List of built-in variables. The order of these won't change, ever.
     /// </summary>
     public static readonly string[] BuiltInVariables =
@@ -29,4 +19,14 @@ public static class ShellProperties {
         "path",
         "home"
     };
+
+    /// <summary>
+    ///     Exit code of the last command executed.
+    /// </summary>
+    public static int LastExitCode { get; set; }
+
+    /// <summary>
+    ///     Error message of the last failed command.
+    /// </summary>
+    public static string ExitErrorMessage { get; set; } = string.Empty;
 }

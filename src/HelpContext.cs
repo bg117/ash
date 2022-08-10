@@ -7,7 +7,7 @@ public class HelpContext {
     /// <summary>
     ///     Command.
     /// </summary>
-    public string Command     { get; init; } = string.Empty;
+    public string Command { get; init; } = string.Empty;
 
     /// <summary>
     ///     Description of the command.
@@ -17,5 +17,5 @@ public class HelpContext {
     /// <summary>
     ///     The usage of the command.
     /// </summary>
-    public string Usage       { get; init; } = string.Empty;
+    public string Usage { get; init; } = string.Empty;
 }

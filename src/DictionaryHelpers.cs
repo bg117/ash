@@ -1,12 +1,12 @@
 namespace OpenProject.ASH;
 
 /// <summary>
-///     Functions that help with <see cref="Dictionary{TKey,TValue}"/>.
+///     Functions that help with <see cref="Dictionary{TKey,TValue}" />.
 /// </summary>
 internal static class DictionaryHelpers {
     /// <summary>
-    ///     Merges <paramref name="priority"/> and <paramref name="add"/>, prioritizing values
-    ///     contained in <paramref name="priority"/> if duplicates occur.
+    ///     Merges <paramref name="priority" /> and <paramref name="add" />, prioritizing values
+    ///     contained in <paramref name="priority" /> if duplicates occur.
     /// </summary>
     /// <param name="priority">Base dictionary.</param>
     /// <param name="add">Dictionary to add.</param>

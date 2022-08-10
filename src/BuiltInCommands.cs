@@ -27,7 +27,7 @@ public static class BuiltInCommands {
             Command = "print",
             Description =
                 "Formats and prints the text according to the format string. Quotes will be removed. Also un-escapes escape sequences (like \\n, \\r, etc.).",
-            Usage = "print <format> [arg1, [arg2, [...]]"
+            Usage = "print <format> [arg1, [arg2, [...]]]"
         },
         new()
         {
@@ -41,14 +41,23 @@ public static class BuiltInCommands {
             Description =
                 "Lists the files in the current directory, or optionally, in the directory specified.",
             Usage = "ls [-a] [-l] [-h] [directory]"
+        },
+        new()
+        {
+            Command     = "exit",
+            Description = "Exits the shell.",
+            Usage       = "exit [code]"
         }
     };
 
     /// <summary>
-    ///     Display help contained in <see cref="HelpContexts"/>.
+    ///     Display help contained in <see cref="HelpContexts" />.
     /// </summary>
     /// <param name="command">(optional) command to describe. If not specified, displays help for all commands.</param>
-    /// <exception cref="ArgumentException">If <paramref name="command"/> does not exist in <see cref="HelpContexts"/>, throws an <see cref="ArgumentException"/>.</exception>
+    /// <exception cref="ArgumentException">
+    ///     If <paramref name="command" /> does not exist in <see cref="HelpContexts" />,
+    ///     throws an <see cref="ArgumentException" />.
+    /// </exception>
     public static void Help(string? command = null)
     {
         if (command == null) {
@@ -89,13 +98,10 @@ public static class BuiltInCommands {
 
     /// <summary>
     ///     Lists the contents of the directory specified.
-    ///
-    ///     If <paramref name="listFormat"/>
+    ///     If <paramref name="listFormat" />
     ///     is specified, lists contents in list format. See README for more information.
-    ///
-    ///     If <paramref name="all"/> is specified, also displays hidden and system files.
-    ///
-    ///     If <paramref name="humanReadable"/> is specified, displays file sizes in human-readable
+    ///     If <paramref name="all" /> is specified, also displays hidden and system files.
+    ///     If <paramref name="humanReadable" /> is specified, displays file sizes in human-readable
     ///     format.
     /// </summary>
     /// <param name="directory">Directory to list files.</param>
@@ -221,7 +227,10 @@ public static class BuiltInCommands {
     /// </summary>
     /// <param name="fmt">Format string to work on.</param>
     /// <param name="args">Arguments to replace the placeholders in the format string with.</param>
-    /// <exception cref="ArgumentOutOfRangeException">If <paramref name="args"/> fall short of the amount of format specifiers in the format string, an <see cref="ArgumentOutOfRangeException"/> gets thrown.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    ///     If <paramref name="args" /> fall short of the amount of format specifiers
+    ///     in the format string, an <see cref="ArgumentOutOfRangeException" /> gets thrown.
+    /// </exception>
     public static void Print(string fmt, string[] args)
     {
         fmt = Regex.Unescape(fmt);

@@ -12,8 +12,9 @@ public static class Shell {
     /// </summary>
     /// <param name="path">The path of the shell file to parse. Recommended to be an absolute path.</param>
     /// <param name="keyValuePairs">The key-value pairs that correspond to variables. May be modified.</param>
-    public static void RunShellFile(string                         path,
-                                    ref Dictionary<string, string> keyValuePairs)
+    public static void RunShellFile(string path,
+                                    ref Dictionary<string, string>
+                                        keyValuePairs)
     {
         if (!File.Exists(path))
             return;
@@ -25,8 +26,6 @@ public static class Shell {
                            ref keyValuePairs); // run this on each line of the config
         }
     }
-
-    private static readonly Stack<string> LastArguments = new();
 
     /// <summary>
     ///     Executes the command specified.
@@ -107,16 +106,6 @@ public static class Shell {
                 args[0].EndsWith('"'))
                 args[0] = args[0][1..^1]; // extract text between quotes
 
-            var lastArg = string.Empty;
-
-            if (LastArguments.Count > 0)
-                lastArg = LastArguments.Pop();
-
-            for (var j = 1; j < args.Length; j++)
-                args[j] = Regex.Replace(args[j], @"\$\<", lastArg);
-
-            if (args.Length > 1) LastArguments.Push(args.Last());
-
             switch (args[0]) {
                 case "echo":
                     BuiltInCommands.Echo(string.Join(' ', args.Skip(1)));
@@ -127,8 +116,9 @@ public static class Shell {
 
                 case "print":
                     if (args.Length < 2) {
-                        ShellProperties.LastExitCode     = 1;
-                        ShellProperties.ExitErrorMessage = "Too few arguments for print.";
+                        ShellProperties.LastExitCode = 1;
+                        ShellProperties.ExitErrorMessage =
+                            "Too few arguments for print.";
 
                         return false; // return if any command fails (&&)
                     }
@@ -156,8 +146,9 @@ public static class Shell {
                 case "help":
                     switch (args.Length) {
                         case > 2:
-                            ShellProperties.LastExitCode     = 1;
-                            ShellProperties.ExitErrorMessage = "Too many arguments for help.";
+                            ShellProperties.LastExitCode = 1;
+                            ShellProperties.ExitErrorMessage =
+                                "Too many arguments for help.";
 
                             return false; // return if any command fails (&&)
                         case 2:
@@ -181,10 +172,33 @@ public static class Shell {
 
                     break;
 
+                case "exit":
+                    if (args.Length > 2) {
+                        ShellProperties.LastExitCode = 1;
+                        ShellProperties.ExitErrorMessage =
+                            "Too many arguments for cd.";
+
+                        return false; // return if any command fails (&&)
+                    }
+
+                    var code = 0;
+                    if ((args.Length == 2) &&
+                        !int.TryParse(args[1], out code)) {
+                        ShellProperties.LastExitCode = 2;
+                        ShellProperties.ExitErrorMessage =
+                            "Argument for exit must be an integer (positive or negative).";
+
+                        return false;
+                    }
+
+                    Environment.Exit(code);
+                    break;
+
                 case "cd":
                     if (args.Length < 2) {
-                        ShellProperties.LastExitCode     = 1;
-                        ShellProperties.ExitErrorMessage = "Too few arguments for cd.";
+                        ShellProperties.LastExitCode = 1;
+                        ShellProperties.ExitErrorMessage =
+                            "Too few arguments for cd.";
 
                         return false; // return if any command fails (&&)
                     }
@@ -229,8 +243,9 @@ public static class Shell {
                         if (skip.Any(predicate)) {
                             if (skip.Where(predicate).Take(2).Count() >
                                 1) {
-                                ShellProperties.LastExitCode     = 1;
-                                ShellProperties.ExitErrorMessage = "Too many arguments for ls.";
+                                ShellProperties.LastExitCode = 1;
+                                ShellProperties.ExitErrorMessage =
+                                    "Too many arguments for ls.";
 
                                 return false;
                             }
@@ -258,13 +273,22 @@ public static class Shell {
                         var path = vars[ShellProperties.BuiltInVariables[7]]
                            .Split('|');
 
+                        // program name
+                        var prog = args[0];
+                        if (OperatingSystem.IsWindows()) {
+                            prog = prog
+                                      .EndsWith(".exe")
+                                       ? prog
+                                       : prog +
+                                         ".exe";
+                        }
+
                         // find program(.exe) in $path
                         foreach (var tmp in path
-                                           .Select(pathComponent => Path.Combine(
-                                                                                 pathComponent,
-                                                                                 args[0].EndsWith(".exe")
-                                                                                     ? args[0]
-                                                                                     : args[0] + ".exe"))
+                                           .Select(pathComponent =>
+                                                       Path.Combine(
+                                                                    pathComponent,
+                                                                    prog))
                                            .Where(File.Exists)) {
                             args[0] = tmp;
                             break;
@@ -274,7 +298,8 @@ public static class Shell {
                         process.StartInfo.FileName = args[0];
 
                         // this is the reason why we didn't extract the text between the quotes earlier
-                        process.StartInfo.Arguments = string.Join(' ', args.Skip(1));
+                        process.StartInfo.Arguments =
+                            string.Join(' ', args.Skip(1));
 
                         try {
                             if (!process.Start())

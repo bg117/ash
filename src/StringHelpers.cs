@@ -7,16 +7,16 @@ namespace OpenProject.ASH;
 /// </summary>
 internal static class StringHelpers {
     /// <summary>
-    ///     Converts <paramref name="byteCount"/> to a human-readable string.
+    ///     Converts <paramref name="byteCount" /> to a human-readable string.
     /// </summary>
     /// <param name="byteCount">The integer to process.</param>
     /// <returns>A human-readable string that describes the size of a file.</returns>
     internal static string BytesToString(long byteCount)
     {
         var suffix = new[]
-            {
-                "B", "K", "M", "G", "T", "P", "E"
-            }; // long runs out around EB
+                     {
+                         "B", "K", "M", "G", "T", "P", "E"
+                     }; // long runs out around EB
 
         if (byteCount == 0)
             return "0" + suffix[0];

@@ -1,11 +1,12 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace OpenProject.ASH;
+namespace OpenProject.ApplicationShell.Helpers;
 
 /// <summary>
 ///     Functions that help with printing to the console.
 /// </summary>
-internal static class ConsoleExtensions {
+internal static class ConsoleHelpers
+{
     /// <summary>
     ///     Colored <see cref="Console.WriteLine(string?)" />.
     /// </summary>
@@ -15,9 +16,9 @@ internal static class ConsoleExtensions {
     /// <remarks>
     ///     "Stolen" (it's OUR code anyway) from Stack Overflow.
     /// </remarks>
-    internal static void ColoredWriteLine(TextWriter            stream,
-                                          string?               s,
-                                          params ConsoleColor[] fgs)
+    internal static void ColoredWriteLine(TextWriter stream,
+        string? s,
+        params ConsoleColor[] fgs)
     {
         ColoredWrite(stream, s, fgs);
         stream.WriteLine();
@@ -32,28 +33,28 @@ internal static class ConsoleExtensions {
     /// <remarks>
     ///     "Stolen" (it's OUR code anyway) from Stack Overflow.
     /// </remarks>
-    internal static void ColoredWrite(TextWriter            stream,
-                                      string?               s,
-                                      params ConsoleColor[] fgs)
+    internal static void ColoredWrite(TextWriter stream,
+        string? s,
+        params ConsoleColor[] fgs)
     {
-        if (!((stream == Console.Out) ||
-              (stream ==
-               Console.Error))) // check if stream is not a System.Console TextWriter stream.
-        {
+        if (!(stream == Console.Out ||
+              stream ==
+              Console.Error)) // check if stream is not a System.Console TextWriter stream.
             throw new
                 InvalidOperationException($"{nameof(stream)} only accepts System.Console streams.");
-        }
 
         if (s == null)
             return;
 
         var pieces = Regex.Split(s, @"(\[[^\]]*\])"); // extract [text]
 
-        for (int i = 0, j = 0; i < pieces.Length; i++) {
+        for (int i = 0, j = 0; i < pieces.Length; i++)
+        {
             var piece = pieces[i];
 
             if (piece.StartsWith("[") &&
-                piece.EndsWith("]")) {
+                piece.EndsWith("]"))
+            {
                 Console.ForegroundColor = fgs[j++]; // next foreground color
                 piece = piece[1..^1]; // remove the square brackets
             }

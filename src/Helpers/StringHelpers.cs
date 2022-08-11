@@ -1,11 +1,12 @@
 ﻿using System.Text;
 
-namespace OpenProject.ASH;
+namespace OpenProject.ApplicationShell.Helpers;
 
 /// <summary>
 ///     Methods to help with string formatting and manipulation..
 /// </summary>
-internal static class StringHelpers {
+internal static class StringHelpers
+{
     /// <summary>
     ///     Converts <paramref name="byteCount" /> to a human-readable string.
     /// </summary>
@@ -14,18 +15,18 @@ internal static class StringHelpers {
     internal static string BytesToString(long byteCount)
     {
         var suffix = new[]
-                     {
-                         "B", "K", "M", "G", "T", "P", "E"
-                     }; // long runs out around EB
+        {
+            "B", "K", "M", "G", "T", "P", "E"
+        }; // long runs out around EB
 
         if (byteCount == 0)
             return "0" + suffix[0];
 
         var bytes = Math.Abs(byteCount);
         var place = Convert.ToInt32(Math.Floor(Math.Log(bytes, 1000)));
-        var num   = Math.Round(bytes / Math.Pow(1000, place), 1);
+        var num = Math.Round(bytes / Math.Pow(1000, place), 1);
 
-        return (Math.Sign(byteCount) * num) + suffix[place];
+        return Math.Sign(byteCount) * num + suffix[place];
     }
 
     /// <summary>
@@ -37,19 +38,20 @@ internal static class StringHelpers {
     /// <returns></returns>
     internal static IEnumerable<string> SplitOutsideQuotes(
         this string str,
-        string      delimiter    = " ",
-        char        stringEscape = '\\')
+        string delimiter = " ",
+        char stringEscape = '\\')
     {
         const char quote = '"';
 
-        var sb      = new StringBuilder(str.Length);
+        var sb = new StringBuilder(str.Length);
         var counter = 0;
 
-        while (counter < str.Length) {
+        while (counter < str.Length)
             // if starts with delimiter if so read ahead to see if matches
-            if ((delimiter[0] == str[counter]) &&
+            if (delimiter[0] == str[counter] &&
                 delimiter.SequenceEqual(ReadNext(str, counter,
-                                                 delimiter.Length))) {
+                    delimiter.Length)))
+            {
                 yield return sb.ToString();
 
                 sb.Clear();
@@ -58,10 +60,12 @@ internal static class StringHelpers {
             }
 
             // if we hit a quote read until we hit another quote or end of string
-            else if (str[counter] == quote) {
+            else if (str[counter] == quote)
+            {
                 sb.Append(str[counter++]);
-                while ((counter      < str.Length) &&
-                       (str[counter] != quote)) {
+                while (counter < str.Length &&
+                       str[counter] != quote)
+                {
                     if (str[counter] == stringEscape)
                         sb.Append(str[counter++]);
 
@@ -74,18 +78,20 @@ internal static class StringHelpers {
                     sb.Append(str[counter++]);
             }
             else
+            {
                 sb.Append(str[counter++]);
-        }
+            }
 
         if (sb.Length > 0)
             yield return sb.ToString();
 
         static IEnumerable<char> ReadNext(string str,
-                                          int    currentPosition,
-                                          int    count)
+            int currentPosition,
+            int count)
         {
-            for (var i = 0; i < count; i++) {
-                if ((currentPosition + i) >= str.Length)
+            for (var i = 0; i < count; i++)
+            {
+                if (currentPosition + i >= str.Length)
                     yield break;
 
                 yield return str[currentPosition + i];

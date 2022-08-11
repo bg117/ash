@@ -46,7 +46,7 @@ Currently, there are 4 format specifiers to be used in customizing the prompt.
 - `%c`: The current directory.
 - `%e`: The exit code of the last command executed.
 
-There is another miscellaneous specifier: `%nl`. It is used to represent a new line in the prompt format. It is subject to change in a future version of the shell.
+Use `\n` for newline.
 
 The default is `prompt_fmt = "%u@%m:%c$ "`
 
@@ -73,14 +73,14 @@ All of them can have the values `Black`, `DarkBlue`, `DarkGreen`, `DarkCyan`, `D
 There are 5 built-in commands.
 
 - `help [command]`: Displays the help page. If `[command]` is specified, it displays its description and usage.
-- `echo [text]`: Prints `[text]` and succeeding arguments to the console and a new line. Quotes won't be removed. They will be printed as-is.
-- `print <format> [arg1, [arg2, [...]]]`: Formats and prints the text according to the format string `<format>`. Quotes will be removed. Also un-escapes escape sequences (like \\n, \\r, etc.).
-- `cd <directory>`: Changes the current directory to `<directory>`.
-- `ls [-a] [-l] [-h] [directory]`: Lists the files in the current directory, or optionally, in `[directory]`. Use `-a` to list all files in the directory, including hidden files; `-l` to list the contents in list format; `-h` to print the sizes in human-readable format (with units like B, K, M, G, T, P, E.)
+- `echo [text]`: Prints `[text]` and succeeding arguments to the console and a new line..
+- `strfmt <format> [arg1, [arg2, [...]]]`: Formats and prints the text according to the format string `<format>`. Quotes will be removed. Also un-escapes escape sequences (like \\n, \\r, etc.).
+- `chdir <directory>`: Changes the current directory to `<directory>`.
+- `list [-l] [-a] [-h] [directory]`: Lists the files in the current directory, or optionally, in `[directory]`. Use `-a` to list all files in the directory, including hidden files; `-l` to list the contents in list format; `-h` to print the sizes in human-readable format (with units like B, K, M, G, T, P, E). These flags can be combined like so: `list -al`.
 
-#### `ls` list Format
+#### `list` list Format
 
-`ls -l` will print something like this:
+`list -l` will print something like this:
 
 ```txt
 Mode    | Name   | Date Modified        | Date Created         | Size

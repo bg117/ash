@@ -6,21 +6,21 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>preview</LangVersion>
-        <RootNamespace>OpenProject.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
-        <AssemblyVersion>1.3.0</AssemblyVersion>
+        <RootNamespace>OpenProject.ApplicationShell</RootNamespace>
+        <AssemblyVersion>1.4.0</AssemblyVersion>
         <SignAssembly>False</SignAssembly>
-        <StartupObject>OpenProject.ASH.Program</StartupObject>
+        <StartupObject>OpenProject.ApplicationShell.Program</StartupObject>
+        <Company>The Open Project</Company>
+        <Product>Application Shell</Product>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
-        <DocumentationFile>debug.documentation.docxml</DocumentationFile>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <DocumentationFile>release.documentation.docxml</DocumentationFile>
     </PropertyGroup>
 
 </Project>

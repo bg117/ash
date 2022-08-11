@@ -1,9 +1,10 @@
-namespace OpenProject.ASH;
+namespace OpenProject.ApplicationShell.Helpers;
 
 /// <summary>
 ///     Functions that help with <see cref="Dictionary{TKey,TValue}" />.
 /// </summary>
-internal static class DictionaryHelpers {
+internal static class DictionaryHelpers
+{
     /// <summary>
     ///     Merges <paramref name="priority" /> and <paramref name="add" />, prioritizing values
     ///     contained in <paramref name="priority" /> if duplicates occur.
@@ -15,7 +16,7 @@ internal static class DictionaryHelpers {
     /// <returns>The merged dictionary.</returns>
     internal static Dictionary<TKey, TValue> Merge<TKey, TValue>(
         this Dictionary<TKey, TValue> priority,
-        Dictionary<TKey, TValue>      add) where TKey : notnull
+        Dictionary<TKey, TValue> add) where TKey : notnull
     {
         var list = priority.ToList();
 

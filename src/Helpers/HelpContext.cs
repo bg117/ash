@@ -1,9 +1,10 @@
-﻿namespace OpenProject.ASH;
+﻿namespace OpenProject.ApplicationShell.Helpers;
 
 /// <summary>
 ///     Used for help printing.
 /// </summary>
-public class HelpContext {
+public class HelpContext
+{
     /// <summary>
     ///     Command.
     /// </summary>

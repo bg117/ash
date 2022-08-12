@@ -19,7 +19,7 @@ And more!
 These flags modify how ASH starts up.
 
 - `--quiet|-q`: quiet startup (discussed below in `## Quiet Startup`.)
-- `--execute|-x <commands>`: runs `<commands>` before startup, and before parsing `ash.cfg`.
+- `--execute|-x[:|=]<commands>`: runs `<commands>` before startup, and before parsing `ash.cfg`.
   - `-c`: exits immediately after commands finish executing.
 - `--version|-v`: prints the version of ASH and exits.
 - `--help|-h`: prints the description of every flag, and exits.

@@ -1,6 +1,13 @@
 # ASH Changelog
 
-## Latest: version 1.4.0
+## Latest: version 1.4.1
+
+### New features
+
+- Added a better command-line parser
+- You can now specify short options together (such as `ls -al`), separate long options with an equals sign or a colon (`ash --execute:date`), and specify a short option and its argument together (`ash -xls`).
+
+## version 1.4.0
 
 ### New and changed features
 

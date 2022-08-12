@@ -23,6 +23,8 @@ public class Lexer
         _position = 0;
     }
 
+    private char Current => _source[_position];
+
     /// <summary>
     ///     Checks if the string contains illegal characters.
     /// </summary>
@@ -130,8 +132,6 @@ public class Lexer
 
         return token;
     }
-
-    private char Current => _source[_position];
 
     private bool IsEof()
     {

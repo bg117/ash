@@ -2,12 +2,14 @@ namespace OpenProject.ApplicationShell.Language;
 
 public class Parser
 {
+    // list of tokens for lookahead
     private readonly List<Token> _tokens = new();
 
     private int _position;
 
     public Parser(Lexer lexer)
     {
+        // extract all tokens
         var token = lexer.NextToken();
         while (token.Type != TokenType.Eof)
         {

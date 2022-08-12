@@ -13,35 +13,97 @@ internal static class Program
         (Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0))
         .ToString(3);
 
-    private static readonly HelpContext[] HelpContexts =
+    private static readonly CommandLineOption[] Options =
     {
         new()
         {
-            Command = "--quiet|-q",
+            Option = "quiet",
+            IsLongOption = true,
+            RequiresArgument = false,
             Description =
                 "Runs the program quietly."
         },
         new()
         {
-            Command = "--execute|-x",
+            Option = "q",
+            IsLongOption = false,
+            RequiresArgument = false,
+            Description = "See --quiet."
+        },
+        new()
+        {
+            Option = "execute",
+            IsLongOption = true,
+            RequiresArgument = true,
             Description =
                 $"Executes a command before parsing {ConfigFile}. Optionally pass -c if the shell must exit when a command fails."
         },
         new()
         {
-            Command = "--version|-v",
+            Option = "x",
+            IsLongOption = false,
+            RequiresArgument = true,
+            Description = "See --execute."
+        },
+        new()
+        {
+            Option = "version",
+            IsLongOption = true,
+            RequiresArgument = false,
             Description = "Shows the version and exits the program."
         },
         new()
         {
-            Command = "--help|-h",
+            Option = "v",
+            IsLongOption = false,
+            RequiresArgument = false,
+            Description = "See --version."
+        },
+        new()
+        {
+            Option = "help",
+            IsLongOption = true,
+            RequiresArgument = false,
             Description = "Shows this help message and exits the program."
+        },
+        new()
+        {
+            Option = "h",
+            IsLongOption = false,
+            RequiresArgument = false,
+            Description = "See --help."
         }
     };
 
     private static int Main(string[] args)
     {
         Console.CancelKeyPress += (_, e) => e.Cancel = true;
+
+        var execCmds = new List<string>();
+        var quiet = false;
+        var help = false;
+        var version = false;
+        var execute = false;
+
+        CommandLineHelpers.ParseCommandLine(Options, args, (opt, arg) =>
+        {
+            switch (opt)
+            {
+                case "h" or "help":
+                    help = true;
+                    break;
+                case "v" or "version":
+                    version = true;
+                    break;
+                case "q" or "quiet":
+                    quiet = true;
+                    break;
+                case "x" or "execute":
+                    execute = true;
+                    execCmds.AddRange(arg);
+                    break;
+            }
+        });
 
         var kvEx = new Dictionary<string, string>();
         var kv = new Dictionary<string, string>();
@@ -55,48 +117,20 @@ internal static class Program
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var cfg = Path.Combine(home, ConfigFile);
 
-        var quietStartup = args.Contains("--quiet") || args.Contains("-q");
-        var exitImmediately = args.Contains("-c");
+        // if there are -x arguments, execute them first
+        if (execute)
+            foreach (var cmd in execCmds)
+                shell.Execute(cmd);
 
-        // if there are -ex arguments, execute them first
-        if (args.Contains("--execute") ||
-            args.Contains("-x"))
-        {
-            var execute =
-                args
-                    .Select((a, ind) => a is "--execute" or "-x" ? ind : -1)
-                    .Where(ind => ind !=
-                                  -1); // gets the indices of all -ex arguments
-
-            foreach (var i in execute)
-            {
-                if (i + 1 >= args.Length)
-                {
-                    ConsoleHelpers.ColoredWriteLine(Console.Error,
-                        "[Error]: --execute requires an argument.",
-                        ConsoleColor.Red);
-
-                    return 1;
-                }
-
-                shell.Execute(args[i + 1]);
-            }
-
-            if (exitImmediately)
-                return 0;
-        }
-
-        if (args.Contains("--help") ||
-            args.Contains("-h"))
+        if (help)
         {
             Console.WriteLine($"ASH version {ProgramVersion}");
-            foreach (var ctx in HelpContexts)
-                Console.WriteLine($"{ctx.Command}: {ctx.Description}");
+            foreach (var opt in Options)
+                Console.WriteLine($"{opt.Option}: {opt.Description}");
             return 0;
         }
 
-        if (args.Contains("--version") ||
-            args.Contains("-v"))
+        if (version)
         {
             Console.WriteLine($"ASH version {ProgramVersion}");
             return 0;
@@ -127,10 +161,10 @@ internal static class Program
         if (!shell.Environment.ContainsKey(Shell.BuiltInVariables[0]))
             shell.Environment.Add(Shell.BuiltInVariables[0], DefaultFormat);
 
-        if (!quietStartup)
+        if (!quiet)
             if (shell.Environment.ContainsKey(Shell.BuiltInVariables[6]))
                 _ = bool.TryParse(shell.Environment[Shell.BuiltInVariables[6]],
-                    out quietStartup);
+                    out quiet);
 
         var userColor = ConsoleColor.White;
         var machineColor = ConsoleColor.White;
@@ -156,7 +190,7 @@ internal static class Program
             shell.Environment.Add(Shell.BuiltInVariables[5],
                 exitColorFail.ToString());
 
-        if (!quietStartup)
+        if (!quiet)
         {
             Console.WriteLine($"ASH (Application shell) version {ProgramVersion}");
             Console.WriteLine(

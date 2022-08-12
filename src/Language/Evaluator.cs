@@ -9,6 +9,14 @@ namespace OpenProject.ApplicationShell.Language;
 /// </summary>
 public class Evaluator : IAstVisitor<int>
 {
+    private static readonly Regex VarPattern = new(@"(?<!\\)\$(\w+)"); // capture if not preceded by backslash
+
+    private string _pipeToStdin = string.Empty; // the thing to be piped to stdin of the next process
+
+    // flags that indicate whether to read/write to stdout/stdin, respectively
+    private bool _readStdout;
+    private bool _writeStdin;
+
     /// <summary>
     ///     The root node of the abstract syntax tree.
     /// </summary>
@@ -18,23 +26,6 @@ public class Evaluator : IAstVisitor<int>
     ///     The environment of the shell.
     /// </summary>
     public Dictionary<string, string> Environment { get; set; } = new();
-
-    private static readonly Regex VarPattern = new(@"(?<!\\)\$(\w+)"); // capture if not preceded by backslash
-
-    private string _pipeToStdin = string.Empty; // the thing to be piped to stdin of the next process
-
-    // flags that indicate whether to read/write to stdout/stdin, respectively
-    private bool _readStdout = false;
-    private bool _writeStdin = false;
-
-    /// <summary>
-    ///     Evaluates the AST starting from the root.
-    /// </summary>
-    /// <returns>The exit code of the last command executed.</returns>
-    public int Evaluate()
-    {
-        return Root?.Accept(this) ?? 0;
-    }
 
     public int Visit(Ast node)
     {
@@ -92,161 +83,6 @@ public class Evaluator : IAstVisitor<int>
         proc.WaitForExit();
 
         return proc.ExitCode;
-    }
-
-    private static bool HandleBuiltIns(string exec, string[] strArgs, out int exit)
-    {
-        switch (exec)
-        {
-            case "help":
-                switch (strArgs.Length)
-                {
-                    case > 1:
-                        ConsoleHelpers.ColoredWriteLine(Console.Error, "[Error]: Too many arguments for help",
-                            ConsoleColor.Red);
-                        exit = 1;
-                        return true;
-                    case 1:
-                        BuiltInCommands.Help(strArgs[0]);
-                        break;
-                    default:
-                        BuiltInCommands.Help();
-                        break;
-                }
-
-                break;
-            
-            case "chdir":
-                switch (strArgs.Length)
-                {
-                    case > 1:
-                        ConsoleHelpers.ColoredWriteLine(Console.Error, "[Error]: Too many arguments for chdir", ConsoleColor.Red);
-                        exit = 1;
-                        return true;
-                    case 0:
-                        ConsoleHelpers.ColoredWriteLine(Console.Error, "[Error]: Too few arguments for chdir", ConsoleColor.Red);
-                        exit = 2;
-                        return true;
-                }
-
-                BuiltInCommands.Chdir(strArgs[0]);
-                break;
-            
-            case "strfmt":
-                if (strArgs.Length == 0)
-                {
-                    ConsoleHelpers.ColoredWriteLine(Console.Error, "[Error]: Too little arguments for strfmt",
-                        ConsoleColor.Red);
-                    exit = 1;
-                    return true;
-                }
-                
-                BuiltInCommands.Strfmt(strArgs[0], strArgs[1..]);
-                break;
-            
-            case "echo":
-                BuiltInCommands.Echo(string.Join(" ", strArgs));
-                break;
-
-            case "list":
-            {
-                if (strArgs.Length > 4)
-                {
-                    ConsoleHelpers.ColoredWriteLine(Console.Error, "[Error]: Too many arguments for list",
-                        ConsoleColor.Red);
-                    exit = 1;
-                    return true;
-                }
-                
-                bool a, h;
-                var l = a = h = false;
-
-                bool Pred(string s) => s is not ("-lah" or "-alh" or "-ahl" or "-lha" or "-lh" or "-hl" or "-ah"
-                    or "-ha" or "-la" or "-al" or "-l" or "-a" or "-h");
-
-                if (strArgs.Contains("-lah") || strArgs.Contains("-alh") || strArgs.Contains("-ahl") ||
-                    strArgs.Contains("-lha"))
-                {
-                    l = a = h = true;
-                }
-                else if (strArgs.Contains("-lh") || strArgs.Contains("-hl"))
-                {
-                    l = h = true;
-                }
-                else if (strArgs.Contains("-ah") || strArgs.Contains("-ha"))
-                {
-                    a = h = true;
-                }
-                else if (strArgs.Contains("-la") || strArgs.Contains("-al"))
-                {
-                    l = a = true;
-                }
-                else if (strArgs.Contains("-l"))
-                {
-                    l = true;
-                }
-                else if (strArgs.Contains("-a"))
-                {
-                    a = true;
-                }
-                else if (strArgs.Contains("-h"))
-                {
-                    h = true;
-                }
-                else if (strArgs.Contains("-l") && strArgs.Contains("-a") && strArgs.Contains("-h"))
-                {
-                    l = a = h = true;
-                }
-
-                var dir = Directory.GetCurrentDirectory();
-                if (strArgs.Any(Pred))
-                    dir = strArgs.First(Pred);
-                
-                BuiltInCommands.List(dir, l, a, h);
-            }
-                break;
-            
-            case "exit":
-            {
-                if (strArgs.Length > 1)
-                {
-                    ConsoleHelpers.ColoredWriteLine(Console.Error, "[Error]: Too many arguments for exit",
-                        ConsoleColor.Red);
-                    exit = 1;
-                    return true;
-                }
-
-                var code = 0;
-                if (strArgs.Length == 1 && !int.TryParse(strArgs[0], out code))
-                {
-                    ConsoleHelpers.ColoredWriteLine(Console.Error, "[Error]: Argument for exit must be an integer",
-                        ConsoleColor.Red);
-                    exit = 2;
-                    return true;
-                }
-
-                System.Environment.Exit(strArgs.Length == 0 ? 0 : code);
-            }
-                break;
-                
-            default:
-                exit = 0;
-                return false;
-        }
-
-        exit = 0;
-        return true;
-    }
-
-    private string ReplaceVars(string s)
-    {
-        return VarPattern.Replace(s, match =>
-        {
-            var key = match.Groups[1].Value;
-            return Environment.ContainsKey(key)
-                ? Environment[key]
-                : '$' + key;
-        });
     }
 
     public int Visit(BinaryAst node)
@@ -331,5 +167,157 @@ public class Evaluator : IAstVisitor<int>
     public int Visit(ExpressionStatementAst node)
     {
         return node.Expression.Accept(this);
+    }
+
+    /// <summary>
+    ///     Evaluates the AST starting from the root.
+    /// </summary>
+    /// <returns>The exit code of the last command executed.</returns>
+    public int Evaluate()
+    {
+        return Root?.Accept(this) ?? 0;
+    }
+
+    private static bool HandleBuiltIns(string exec, string[] strArgs, out int exit)
+    {
+        switch (exec)
+        {
+            case "help":
+                switch (strArgs.Length)
+                {
+                    case > 1:
+                        ConsoleHelpers.ColoredWriteLine(Console.Error, "[Error]: Too many arguments for help",
+                            ConsoleColor.Red);
+                        exit = 1;
+                        return true;
+                    case 1:
+                        BuiltInCommands.Help(strArgs[0]);
+                        break;
+                    default:
+                        BuiltInCommands.Help();
+                        break;
+                }
+
+                break;
+
+            case "chdir":
+                switch (strArgs.Length)
+                {
+                    case > 1:
+                        ConsoleHelpers.ColoredWriteLine(Console.Error, "[Error]: Too many arguments for chdir",
+                            ConsoleColor.Red);
+                        exit = 1;
+                        return true;
+                    case 0:
+                        ConsoleHelpers.ColoredWriteLine(Console.Error, "[Error]: Too few arguments for chdir",
+                            ConsoleColor.Red);
+                        exit = 2;
+                        return true;
+                }
+
+                BuiltInCommands.Chdir(strArgs[0]);
+                break;
+
+            case "strfmt":
+                if (strArgs.Length == 0)
+                {
+                    ConsoleHelpers.ColoredWriteLine(Console.Error, "[Error]: Too little arguments for strfmt",
+                        ConsoleColor.Red);
+                    exit = 1;
+                    return true;
+                }
+
+                BuiltInCommands.Strfmt(strArgs[0], strArgs[1..]);
+                break;
+
+            case "echo":
+                BuiltInCommands.Echo(string.Join(" ", strArgs));
+                break;
+
+            case "list":
+            {
+                if (strArgs.Length > 4)
+                {
+                    ConsoleHelpers.ColoredWriteLine(Console.Error, "[Error]: Too many arguments for list",
+                        ConsoleColor.Red);
+                    exit = 1;
+                    return true;
+                }
+
+                bool a, h;
+                var l = a = h = false;
+
+                bool Pred(string s)
+                {
+                    return s is not ("-lah" or "-alh" or "-ahl" or "-lha" or "-lh" or "-hl" or "-ah"
+                        or "-ha" or "-la" or "-al" or "-l" or "-a" or "-h");
+                }
+
+                if (strArgs.Contains("-lah") || strArgs.Contains("-alh") || strArgs.Contains("-ahl") ||
+                    strArgs.Contains("-lha"))
+                    l = a = h = true;
+                else if (strArgs.Contains("-lh") || strArgs.Contains("-hl"))
+                    l = h = true;
+                else if (strArgs.Contains("-ah") || strArgs.Contains("-ha"))
+                    a = h = true;
+                else if (strArgs.Contains("-la") || strArgs.Contains("-al"))
+                    l = a = true;
+                else if (strArgs.Contains("-l"))
+                    l = true;
+                else if (strArgs.Contains("-a"))
+                    a = true;
+                else if (strArgs.Contains("-h"))
+                    h = true;
+                else if (strArgs.Contains("-l") && strArgs.Contains("-a") && strArgs.Contains("-h")) l = a = h = true;
+
+                var dir = Directory.GetCurrentDirectory();
+                if (strArgs.Any(Pred))
+                    dir = strArgs.First(Pred);
+
+                BuiltInCommands.List(dir, l, a, h);
+            }
+                break;
+
+            case "exit":
+            {
+                if (strArgs.Length > 1)
+                {
+                    ConsoleHelpers.ColoredWriteLine(Console.Error, "[Error]: Too many arguments for exit",
+                        ConsoleColor.Red);
+                    exit = 1;
+                    return true;
+                }
+
+                var code = 0;
+                if (strArgs.Length == 1 && !int.TryParse(strArgs[0], out code))
+                {
+                    ConsoleHelpers.ColoredWriteLine(Console.Error, "[Error]: Argument for exit must be an integer",
+                        ConsoleColor.Red);
+                    exit = 2;
+                    return true;
+                }
+
+                System.Environment.Exit(strArgs.Length == 0 ? 0 : code);
+            }
+                break;
+
+            default:
+                exit = 0;
+                return false;
+        }
+
+        exit = 0;
+        return true;
+    }
+
+    private string ReplaceVars(string s)
+    {
+        return VarPattern.Replace(s, match =>
+        {
+            var key = match.Groups[1].Value;
+            return Environment.ContainsKey(key)
+                ? Environment[key]
+                : '$' + key;
+        });
     }
 }

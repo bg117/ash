@@ -18,6 +18,8 @@ public class Shell
         "home"
     };
 
+    private readonly Evaluator _evaluator = new();
+
     /// <summary>
     ///     Exit code of the last command executed.
     /// </summary>
@@ -27,8 +29,6 @@ public class Shell
     ///     The environment of the shell.
     /// </summary>
     public Dictionary<string, string> Environment { get; set; } = new();
-
-    private readonly Evaluator _evaluator = new();
 
     public int Execute(string input)
     {

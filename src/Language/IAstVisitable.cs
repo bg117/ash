@@ -10,6 +10,6 @@ public interface IAstVisitable
     /// </summary>
     /// <param name="visitor">The visitor to accept.</param>
     /// <typeparam name="T">The type to return.</typeparam>
-    /// <returns>Any <typeparamref name="T"/> to be returned.</returns>
+    /// <returns>Any <typeparamref name="T" /> to be returned.</returns>
     public T Accept<T>(IAstVisitor<T> visitor);
 }

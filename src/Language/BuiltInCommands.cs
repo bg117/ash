@@ -225,7 +225,7 @@ public static class BuiltInCommands
 
                 Console.Write(info.Name.PadRight(nameLen));
             }
-            
+
             Console.WriteLine();
         }
     }
@@ -259,16 +259,17 @@ public static class BuiltInCommands
             }
             else
             {
-                switch (fmt[i + 1])
+                ++i;
+                switch (fmt[i])
                 {
-                    case 'h' when fmt[++i + 1] == 'h':
+                    case 'h' when fmt[i + 1] == 'h':
                         fmtState = FormatState.VeryShort;
                         ++i;
                         break;
                     case 'h':
                         fmtState = FormatState.Short;
                         break;
-                    case 'l' when fmt[++i + 1] == 'l':
+                    case 'l' when fmt[i + 1] == 'l':
                         fmtState = FormatState.VeryLong;
                         ++i;
                         break;
@@ -277,14 +278,17 @@ public static class BuiltInCommands
                         break;
                 }
 
-                switch (fmt[++i])
+                ++i;
+                switch (fmt[i])
                 {
                     case 's':
-                        Console.Write(args[j++]);
+                        Console.Write(args[j]);
+                        ++j;
                         break;
 
                     case 'c':
-                        Console.Write(char.Parse(args[j++]));
+                        Console.Write(char.Parse(args[j]));
+                        ++j;
                         break;
 
                     case 'd':

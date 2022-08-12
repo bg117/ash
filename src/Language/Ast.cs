@@ -5,7 +5,7 @@ namespace OpenProject.ApplicationShell.Language;
 /// </summary>
 public abstract class Ast : IAstVisitable
 {
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public abstract T Accept<T>(IAstVisitor<T> visitor);
 }
 
@@ -56,7 +56,7 @@ public class BinaryAst : ExpressionAst
     /// </summary>
     public Token Operator { get; set; }
 
-    /// <inheritdoc cref="Ast.Accept{T}"/>
+    /// <inheritdoc cref="Ast.Accept{T}" />
     public override T Accept<T>(IAstVisitor<T> visitor)
     {
         return visitor.Visit(this);
@@ -89,7 +89,7 @@ public class CommandAst : ExpressionAst
     /// </summary>
     public Token[] Arguments { get; set; }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public override T Accept<T>(IAstVisitor<T> visitor)
     {
         return visitor.Visit(this);
@@ -122,7 +122,7 @@ public class AssignmentAst : StatementAst
     /// </summary>
     public Token NewValue { get; set; }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public override T Accept<T>(IAstVisitor<T> visitor)
     {
         return visitor.Visit(this);
@@ -148,7 +148,7 @@ public class ProgramAst : StatementAst
     /// </summary>
     public StatementAst[] Statements { get; set; }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public override T Accept<T>(IAstVisitor<T> visitor)
     {
         return visitor.Visit(this);
@@ -174,7 +174,7 @@ public class ExpressionStatementAst : StatementAst
     /// </summary>
     public ExpressionAst Expression { get; set; }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public override T Accept<T>(IAstVisitor<T> visitor)
     {
         return visitor.Visit(this);

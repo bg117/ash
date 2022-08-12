@@ -3,7 +3,7 @@ namespace OpenProject.ApplicationShell.Language;
 /// <summary>
 ///     Represents a visitor of an abstract syntax tree.
 /// </summary>
-/// <typeparam name="T">Any <typeparamref name="T"/> to be returned.</typeparam>
+/// <typeparam name="T">Any <typeparamref name="T" /> to be returned.</typeparam>
 public interface IAstVisitor<out T>
 {
     public T Visit(Ast node);
